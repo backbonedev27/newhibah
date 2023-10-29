@@ -1,12 +1,6 @@
 const { Permohonan, Keagamaan, Ktp, Rab, Proposal } = require("../models");
 const { Sequelize } = require("sequelize");
 
-const maxFileSize = {
-  ktp: 1 * 1024 * 1024, // 1 MB
-  rab: 1 * 1024 * 1024, // 1 MB
-  proposal: 5 * 1024 * 1024, // 5 MB
-};
-
 const permohonan = async (req, res) => {
   const { body, user, files } = req;
 
