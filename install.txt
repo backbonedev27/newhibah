@@ -1,0 +1,9 @@
+
+
+buat migrasi :
+
+npx sequelize-cli db:migrate
+
+jalankan seeder : 
+
+npx sequelize-cli db:seed:all
