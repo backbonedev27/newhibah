@@ -15,10 +15,12 @@ module.exports = (sequelize, DataTypes) => {
     {
       namafile: DataTypes.STRING,
       size: DataTypes.STRING,
+      path: DataTypes.STRING,
     },
     {
       sequelize,
       modelName: "Rab",
+      tableName: "rabs",
       timestamps: true,
     }
   );

@@ -1,4 +1,4 @@
-const { User } = require("../models");
+const { User, Role } = require("../models");
 const bcryptjs = require("bcryptjs");
 
 const securePassword = async (password) => {
@@ -65,7 +65,7 @@ const register = async (req, res) => {
       nik: nik, // Set nik to the parsed 'nik' value
       notelpon: req.body.notelpon,
       password: spassword,
-      roleid: 1, // Set roleid to 2
+      roleid: 2, // Set roleid to 2 (or as required)
     });
 
     const user_data = await user.save();
@@ -79,6 +79,39 @@ const register = async (req, res) => {
   }
 };
 
+const getusers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      include: [
+        {
+          model: Role,
+          as: "Role", // Using the defined alias 'Role' from the association
+          attributes: ["id", "nama"], // Attributes from the Role table to retrieve
+        },
+      ],
+    });
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        msg: "No users found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      msg: "Users retrieved successfully",
+      data: users,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      msg: error.message,
+    });
+  }
+};
+
 module.exports = {
   register,
+  getusers,
 };

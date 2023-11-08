@@ -1,146 +1,134 @@
-const { Permohonan, Keagamaan, Ktp, Rab, Proposal } = require("../models");
-const { Sequelize } = require("sequelize");
+const {
+  Keagamaan,
+  Permohonan,
+  Ktp,
+  Proposal,
+  Asetrekom,
+  Burek,
+  Rab,
+  Sk,
+  Suket,
+  Suratpermohonan,
+} = require("../models");
+const fs = require("fs");
+
+// Fungsi untuk menyimpan file
+const saveFile = async (file, Model) => {
+  try {
+    if (file && file.length > 0) {
+      const fileData = new Model({
+        namafile: file[0].filename,
+        size: file[0].size,
+        path: file[0].path,
+      });
+      const saved = await fileData.save();
+      return saved || null; // Mengembalikan null jika penyimpanan gagal
+    }
+  } catch (error) {
+    console.error("Error saving file:", error);
+    return null;
+  }
+};
+
+// Fungsi untuk menghapus file terunggah
+const deleteUploadedFiles = async (files) => {
+  files.forEach(async (file) => {
+    if (file && file.length > 0) {
+      const filePath = file[0].path;
+      try {
+        fs.unlinkSync(filePath); // Menghapus file
+      } catch (err) {
+        console.error("Error deleting file:", err);
+      }
+    }
+  });
+};
 
 const permohonan = async (req, res) => {
-  const { body, user, files } = req;
+  const { body, files, user } = req;
 
-  if (!user || !user.nik) {
-    console.log(user?.nik); // Log the user's NIK before the return statement
-    return res.status(401).json({
-      message: "You are not authenticated.",
-    });
+  const {
+    file_ktp,
+    file_rab,
+    file_suket,
+    file_burek,
+    file_sk,
+    file_suratpermohonan,
+    file_asetrekom,
+    file_proposal,
+  } = files;
+
+  const keagamaanID = body.keagamaanid;
+  const existingKeagamaan = await Keagamaan.findByPk(keagamaanID);
+
+  if (!existingKeagamaan) {
+    return res.status(404).json({ message: "ID agama tidak terdaftar" });
   }
 
-  if (!files) {
-    return res.status(400).json({
-      message: "Files not found. Please ensure you upload the necessary files.",
-    });
-  }
+  const existingPermohonan = await Permohonan.findOne({
+    where: { keagamaanid: keagamaanID },
+    order: [["createdAt", "DESC"]],
+  });
 
-  const requiredFields = ["nama", "alamat", "wilayah"];
-
-  for (const field of requiredFields) {
-    if (!body[field]) {
-      return res.status(400).json({
-        message: `Field '${field}' is required.`,
-      });
-    }
-  }
-
-  // Mencari keberadaan keagamaan
-  const existingKeagamaan = await Keagamaan.findByPk(body.keagamaanid);
-
-  if (existingKeagamaan) {
+  if (existingPermohonan) {
+    const currentDate = new Date();
     const twoYearsAgo = new Date();
-    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+    twoYearsAgo.setFullYear(currentDate.getFullYear() - 2);
 
-    if (existingKeagamaan.createdAt > twoYearsAgo) {
-      const lastSubmissionDate = existingKeagamaan.createdAt;
-      const lastSubmissionFormattedDate =
-        lastSubmissionDate.toLocaleDateString("id-ID");
-      const nextSubmissionDate = new Date();
-      nextSubmissionDate.setFullYear(nextSubmissionDate.getFullYear() + 2);
-      const nextSubmissionFormattedDate =
-        nextSubmissionDate.toLocaleDateString("id-ID");
-
-      return res.status(400).json({
-        message: `Anda harus menunggu 2 tahun untuk mengajukan permohonan lagi. Terakhir diajukan pada: ${lastSubmissionFormattedDate}. Anda dapat mengajukan lagi setelah: ${nextSubmissionFormattedDate}`,
+    if (existingPermohonan.createdAt > twoYearsAgo) {
+      return res.status(403).json({
+        message:
+          "ID agama telah digunakan dalam permohonan dalam dua tahun terakhir. Silakan coba lagi setelah 2 tahun.",
       });
     }
-  }
-
-  const maxSizes = {
-    ktp: 1 * 1024 * 1024, // 1MB
-    rab: 1 * 1024 * 1024, // 1MB
-    proposal: 5 * 1024 * 1024, // 5MB
-  };
-
-  const ktpFile = req.files["file_ktp"];
-  if (!ktpFile) {
-    return res.status(400).json({ message: "KTP file not found" });
-  }
-
-  if (ktpFile[0].size > maxSizes.ktp) {
-    return res.status(400).json({
-      message: "KTP file size exceeds the maximum allowed size (1MB)",
-    });
-  }
-
-  const rabFile = req.files["file_rab"];
-  if (!rabFile) {
-    return res.status(400).json({ message: "RAB file not found" });
-  }
-
-  if (rabFile[0].size > maxSizes.rab) {
-    return res.status(400).json({
-      message: "RAB file size exceeds the maximum allowed size (1MB)",
-    });
-  }
-
-  const proposalFile = req.files["file_proposal"];
-  if (!proposalFile) {
-    return res.status(400).json({ message: "Proposal file not found" });
-  }
-
-  if (proposalFile[0].size > maxSizes.proposal) {
-    return res.status(400).json({
-      message: "Proposal file size exceeds the maximum allowed size (5MB)",
-    });
   }
 
   try {
-    const ktpData = new Ktp({
-      namafile: ktpFile[0].originalname,
-      size: ktpFile[0].size,
-    });
-    const ktpSaved = await ktpData.save();
-
-    const rabData = new Rab({
-      namafile: rabFile[0].originalname,
-      size: rabFile[0].size,
-    });
-    const rabSaved = await rabData.save();
-
-    const proposalData = new Proposal({
-      namafile: proposalFile[0].originalname,
-      size: proposalFile[0].size,
-    });
-    const proposalSaved = await proposalData.save();
-
-    const keagamaanData = new Keagamaan({
-      id: body.keagamaanid,
-      nama: body.nama,
-      alamat: body.alamat,
-      wilayah: body.wilayah,
-    });
-
-    const keagamaanSaved = await keagamaanData.save();
+    const savedFiles = await Promise.all([
+      saveFile(file_ktp, Ktp),
+      saveFile(file_rab, Rab),
+      saveFile(file_suket, Suket),
+      saveFile(file_burek, Burek),
+      saveFile(file_sk, Sk),
+      saveFile(file_proposal, Proposal),
+      saveFile(file_suratpermohonan, Suratpermohonan),
+      saveFile(file_asetrekom, Asetrekom),
+    ]);
 
     const permohonanData = new Permohonan({
-      nama: body.nama,
-      notelpon: body.notelpon,
-      keagamaanid: keagamaanSaved.id,
+      keagamaanid: body.keagamaanid,
       pengajuandana: body.pengajuandana,
       tujuan: body.tujuan,
       norek: body.norek,
       statusid: 1,
-      kategoriid: body.kategoriid,
-      ktpid: ktpSaved.id,
-      rabid: rabSaved.id,
-      keterangan: body.keterangan,
-      proposalid: proposalSaved.id,
+      ktpid: savedFiles[0].id,
+      rabid: savedFiles[1].id,
+      suketid: savedFiles[2].id,
+      burekid: savedFiles[3].id,
+      skid: savedFiles[4].id,
+      suratpermohonanid: savedFiles[5].id,
+      asetrekomid: savedFiles[6].id,
+      proposalid: savedFiles[7].id,
+      prosesid: 3,
       userid: user.nik,
     });
 
-    const permohonanSaved = await permohonanData.save();
-    return res.status(201).json({
-      success: true,
-      message: "Request successfully created",
-      data: permohonanSaved,
-    });
+    await permohonanData.save();
+
+    return res.status(201).json({ message: "Permohonan berhasil" });
   } catch (error) {
-    console.error("Error:", error); // Handle error, log, or return specific error message
-    return res.status(500).json({ message: "Failed to save the data" });
+    // If an error occurs during the database save, delete the uploaded files
+    await deleteUploadedFiles([
+      file_ktp,
+      file_rab,
+      file_suket,
+      file_burek,
+      file_sk,
+      file_proposal,
+      file_suratpermohonan,
+      file_asetrekom,
+    ]);
+    return res.status(500).json({ message: "Gagal menyimpan file" });
   }
 };
 

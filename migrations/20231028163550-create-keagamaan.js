@@ -18,6 +18,9 @@ module.exports = {
       wilayah: {
         type: Sequelize.STRING,
       },
+      kategoriid: {
+        type: Sequelize.INTEGER,
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),

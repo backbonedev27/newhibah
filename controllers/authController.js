@@ -31,11 +31,22 @@ const login = async (req, res) => {
       expiresIn: "1h", // Token expiration time
     });
 
-    res.status(200).json({ token });
+    if (user.roleid === 1) {
+      return res.status(200).json({ token, message: "Admin login successful" });
+    } else if (user.roleid === 2) {
+      return res.status(200).json({ token, message: "User login successful" });
+    } else {
+      return res.status(200).json({ token, message: "Login successful" });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-module.exports = { login };
+const logout = (req, res) => {
+  // Tanggapi permintaan logout dengan respons status 200 OK
+  res.status(200).json({ message: "Logout successful" });
+};
+
+module.exports = { login, logout };

@@ -12,17 +12,18 @@ module.exports = {
       userid: {
         type: Sequelize.BIGINT,
       },
-      nama: {
-        type: Sequelize.STRING,
-      },
-      notelpon: {
-        type: Sequelize.STRING,
-      },
+
       keagamaanid: {
+        type: Sequelize.BIGINT,
+      },
+      statusid: {
+        type: Sequelize.INTEGER,
+      },
+      prosesid: {
         type: Sequelize.INTEGER,
       },
       pengajuandana: {
-        type: Sequelize.DOUBLE,
+        type: Sequelize.STRING,
       },
       tujuan: {
         type: Sequelize.STRING,
@@ -30,16 +31,22 @@ module.exports = {
       norek: {
         type: Sequelize.STRING,
       },
-      statusid: {
-        type: Sequelize.INTEGER,
-      },
-      keterangan: {
-        type: Sequelize.STRING,
-      },
-      kategoriid: {
+      skid: {
         type: Sequelize.INTEGER,
       },
       ktpid: {
+        type: Sequelize.INTEGER,
+      },
+      suratpermohonanid: {
+        type: Sequelize.INTEGER,
+      },
+      asetrekomid: {
+        type: Sequelize.INTEGER,
+      },
+      suketid: {
+        type: Sequelize.INTEGER,
+      },
+      burekid: {
         type: Sequelize.INTEGER,
       },
       proposalid: {
